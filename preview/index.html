@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ContaCliente — Preview de Páginas</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:    #2563eb;
+      --brand-dk: #1d4ed8;
+      --brand-lt: #eff6ff;
+      --gray-50:  #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-900: #111827;
+      --green:    #16a34a;
+      --red:      #dc2626;
+      --yellow:   #d97706;
+      --radius:   12px;
+      --shadow:   0 4px 24px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: 'Segoe UI', Inter, system-ui, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: var(--brand);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .brand-icon svg { color: white; }
+
+    .brand-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .header-badge {
+      background: var(--brand-lt);
+      color: var(--brand);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      border: 1px solid #bfdbfe;
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: background .15s, color .15s;
+      text-decoration: none;
+    }
+
+    .nav-pill:hover,
+    .nav-pill.active {
+      background: var(--brand-lt);
+      color: var(--brand);
+    }
+
+    /* ── Hero ────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--brand) 0%, #1e40af 100%);
+      color: white;
+      padding: 64px 24px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span { color: #93c5fd; }
+
+    .hero p {
+      font-size: 17px;
+      color: #bfdbfe;
+      max-width: 560px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .hero-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .chip {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* ── Stats bar ──────────────────────────────────── */
+    .stats-bar {
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .stats-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .stat-item {
+      padding: 20px 0;
+      text-align: center;
+      border-right: 1px solid var(--gray-200);
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--brand);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    /* ── Main content ───────────────────────────────── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .section-sub {
+      font-size: 14px;
+      color: var(--gray-400);
+      margin-bottom: 32px;
+    }
+
+    /* ── Page grid ──────────────────────────────────── */
+    .pages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    .page-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .page-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.13);
+    }
+
+    .page-card.featured {
+      grid-column: 1 / -1;
+    }
+
+    .screenshot-wrap {
+      position: relative;
+      overflow: hidden;
+      background: var(--gray-100);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .screenshot-wrap.tall { height: 260px; }
+    .screenshot-wrap.featured-height { height: 400px; }
+
+    .screenshot-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top left;
+      display: block;
+      transition: transform .4s ease;
+    }
+
+    .page-card:hover .screenshot-wrap img {
+      transform: scale(1.02);
+    }
+
+    .page-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--brand);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+    }
+
+    .page-badge.green  { background: #15803d; }
+    .page-badge.purple { background: #7c3aed; }
+    .page-badge.orange { background: #c2410c; }
+    .page-badge.teal   { background: #0f766e; }
+    .page-badge.indigo { background: #4338ca; }
+
+    .page-info {
+      padding: 18px 20px;
+    }
+
+    .page-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-desc {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+
+    .page-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .feature-tag {
+      background: var(--gray-100);
+      color: var(--gray-600);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 5px;
+    }
+
+    /* ── Lightbox ───────────────────────────────────── */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(0,0,0,.85);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox-inner {
+      position: relative;
+      max-width: 1100px;
+      width: 100%;
+      max-height: 90vh;
+    }
+
+    .lightbox-inner img {
+      width: 100%;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: var(--radius);
+      box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: -16px;
+      right: -16px;
+      width: 36px; height: 36px;
+      background: white;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gray-900);
+      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      transition: background .15s;
+    }
+
+    .lightbox-close:hover { background: var(--gray-100); }
+
+    .lightbox-caption {
+      text-align: center;
+      color: white;
+      font-size: 14px;
+      margin-top: 14px;
+      opacity: .7;
+    }
+
+    /* ── Schema section ─────────────────────────────── */
+    .schema-section {
+      margin-top: 56px;
+    }
+
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .schema-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .schema-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .schema-field {
+      font-size: 12px;
+      color: var(--gray-600);
+      padding: 3px 0;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      gap: 6px;
+    }
+
+    .schema-field:last-child { border-bottom: none; }
+
+    .field-type {
+      color: var(--gray-400);
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    /* ── Stack section ──────────────────────────────── */
+    .stack-section { margin-top: 56px; }
+
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .stack-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .stack-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .stack-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .stack-sub  { font-size: 11px; color: var(--gray-400); }
+
+    /* ── Footer ─────────────────────────────────────── */
+    footer {
+      margin-top: 72px;
+      border-top: 1px solid var(--gray-200);
+      background: white;
+      padding: 28px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--gray-400);
+    }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 640px) {
+      .stats-inner { grid-template-columns: repeat(2, 1fr); }
+      .nav-pills { display: none; }
+      .page-card.featured { grid-column: auto; }
+      .screenshot-wrap.featured-height { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <a class="brand" href="#">
+      <div class="brand-icon">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3"/>
+          <rect x="9" y="3" width="6" height="6" rx="1"/>
+          <path d="M9 12h6M9 16h4"/>
+        </svg>
+      </div>
+      <span class="brand-name">ContaCliente</span>
+    </a>
+
+    <nav class="nav-pills">
+      <a class="nav-pill active" href="#pages">Páginas</a>
+      <a class="nav-pill" href="#schema">Banco de Dados</a>
+      <a class="nav-pill" href="#stack">Stack</a>
+    </nav>
+
+    <span class="header-badge">Preview v0.1</span>
+  </div>
+</header>
+
+<!-- ── Hero ────────────────────────────────────────── -->
+<section class="hero">
+  <h1>
+    <span>ContaCliente</span><br/>
+    Sistema Contábil Completo
+  </h1>
+  <p>Plataforma web para comunicação entre escritório de contabilidade e clientes — com gestão de obrigações, financeiro e mensagens em tempo real.</p>
+  <div class="hero-chips">
+    <span class="chip">Next.js 15 App Router</span>
+    <span class="chip">TypeScript</span>
+    <span class="chip">Tailwind CSS</span>
+    <span class="chip">Supabase + PostgreSQL</span>
+    <span class="chip">Row Level Security</span>
+  </div>
+</section>
+
+<!-- ── Stats ───────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-value">7</div>
+      <div class="stat-label">Páginas</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">6</div>
+      <div class="stat-label">Componentes UI</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">5</div>
+      <div class="stat-label">Tabelas SQL</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">3</div>
+      <div class="stat-label">Perfis de acesso</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Pages ───────────────────────────────────────── -->
+<div class="container" id="pages">
+  <div class="section-title">Páginas do sistema</div>
+  <div class="section-sub">Clique em qualquer card para ampliar a visualização</div>
+
+  <div class="pages-grid">
+
+    <!-- Dashboard — featured -->
+    <div class="page-card featured" onclick="openLightbox('screenshots/dashboard.png','Dashboard — Visão geral do escritório')">
+      <div class="screenshot-wrap featured-height">
+        <img src="screenshots/dashboard.png" alt="Dashboard" />
+        <span class="page-badge">Dashboard</span>
+      </div>
+      <div class="page-info">
+        <div class="page-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard — Visão Geral
+        </div>
+        <div class="page-desc">Painel principal com KPIs em tempo real: clientes ativos, mensagens não lidas, obrigações pendentes e receita do mês. Exibe alerta de itens críticos, feed de atividade recente e próximas obrigações com prazo.</div>
+        <div class="page-features">
+          <span class="feature-tag">4 cards KPI</span>
+          <span class="feature-tag">Alerta de pendências</span>
+          <span class="feature-tag">Feed de atividade</span>
+          <span class="feature-tag">Próximas obrigações</span>
+          <span class="feature-tag">Sidebar colapsável</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <div class="page-card" onclick="openLightbox('screenshots/login.png','Login — Autenticação com perfis')">
+      <div class="screenshot-wrap tall">
+        <img src="screenshots/login.png" alt="Login" />
+        <span class="page-badge indigo">Login</span>
+      </div>
+      <div class="page-info">
+        <div class="page-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          Login — Autenticação
+        </div>
+        <div class="page-desc">Tela de acesso com painel de marketing à esquerda e formulário à direita. Suporta toggle de senha e retorno de erro amigável.</div>
+        <div class="page-features">
+          <span class="feature-tag">Supabase Auth</span>
+          <span class="feature-tag">Toggle senha</span>
+          <span class="feature-tag">3 perfis</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clientes -->
+    <div class="page-card" onclick="openLightbox('screenshots/clientes.png','Clientes — Cadastro e gestão')">
+      <div class="screenshot-wrap tall">
+        <img src="screenshots/clientes.png" alt="Clientes" />
+        <span class="page-badge green">Clientes</span>
+      </div>
+      <div class="page-info">
+        <div class="page-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Clientes — Cadastro
+        </div>
+        <div class="page-desc">Listagem completa com CNPJ formatado, busca em tempo real, filtros, cards de resumo e modal de cadastro. Badge de status (Ativo / Inativo / Pendente).</div>
+        <div class="page-features">
+          <span class="feature-tag">Busca em tempo real</span>
+          <span class="feature-tag">CNPJ formatado</span>
+          <span class="feature-tag">Modal de cadastro</span>
+          <span class="feature-tag">Detalhe do cliente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comunicação -->
+    <div class="page-card" onclick="openLightbox('screenshots/comunicacao.png','Comunicação — Chat escritório × cliente')">
+      <div class="screenshot-wrap tall">
+        <img src="screenshots/comunicacao.png" alt="Comunicação" />
+        <span class="page-badge purple">Comunicação</span>
+      </div>
+      <div class="page-info">
+        <div class="page-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Comunicação — Chat
+        </div>
+        <div class="page-desc">Interface estilo messenger com lista de threads à esquerda e conversa com balões coloridos à direita. Campo de resposta com anexo e envio.</div>
+        <div class="page-features">
+          <span class="feature-tag">Threads de mensagens</span>
+          <span class="feature-tag">Balões de chat</span>
+          <span class="feature-tag">Indicador "Não lido"</span>
+          <span class="feature-tag">Anexos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Obrigações -->
+    <div class="page-card" onclick="openLightbox('screenshots/obrigacoes.png','Obrigações — Controle de prazos')">
+      <div class="screenshot-wrap tall">
+        <img src="screenshots/obrigacoes.png" alt="Obrigações" />
+        <span class="page-badge orange">Obrigações</span>
+      </div>
+      <div class="page-info">
+        <div class="page-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Obrigações — Prazos
+        </div>
+        <div class="page-desc">Tabela com filtro por abas (Todas / Pendentes / Em andamento / Vencidas). Prioridade e status com badges coloridos. Categorias fiscais, trabalhistas e federais.</div>
+        <div class="page-features">
+          <span class="feature-tag">Filtro por status</span>
+          <span class="feature-tag">Prioridade crítica</span>
+          <span class="feature-tag">Categorias</span>
+          <span class="feature-tag">Vencimentos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financeiro -->
+    <div class="page-card" onclick="openLightbox('screenshots/financeiro.png','Financeiro — Honorários e recebimentos')">
+      <div class="screenshot-wrap tall">
+        <img src="screenshots/financeiro.png" alt="Financeiro" />
+        <span class="page-badge teal">Financeiro</span>
+      </div>
+      <div class="page-info">
+        <div class="page-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Financeiro — Honorários
+        </div>
+        <div class="page-desc">Resumo de recebido / a receber / em atraso. Tabela de honorários com NF, mês de referência e ação contextual "Registrar pagamento".</div>
+        <div class="page-features">
+          <span class="feature-tag">Resumo financeiro</span>
+          <span class="feature-tag">Controle de NF</span>
+          <span class="feature-tag">Registrar pagamento</span>
+          <span class="feature-tag">Filtro por status</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configurações -->
+    <div class="page-card" onclick="openLightbox('screenshots/configuracoes.png','Configurações — Escritório e usuários')">
+      <div class="screenshot-wrap tall">
+        <img src="screenshots/configuracoes.png" alt="Configurações" />
+        <span class="page-badge">Configurações</span>
+      </div>
+      <div class="page-info">
+        <div class="page-title">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Configurações
+        </div>
+        <div class="page-desc">Dados do escritório, gestão de usuários com avatares e perfis (Admin / Staff), preferências de notificação e troca de senha.</div>
+        <div class="page-features">
+          <span class="feature-tag">Dados do escritório</span>
+          <span class="feature-tag">Gestão de usuários</span>
+          <span class="feature-tag">Notificações</span>
+          <span class="feature-tag">Segurança</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages-grid -->
+
+  <!-- ── Schema ──────────────────────────────────────── -->
+  <div class="schema-section" id="schema">
+    <div class="section-title">Banco de Dados — PostgreSQL</div>
+    <div class="section-sub">5 tabelas com RLS, triggers e enums. Deploy via Supabase.</div>
+
+    <div class="schema-grid">
+
+      <div class="schema-card">
+        <div class="schema-card-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          profiles
+        </div>
+        <div class="schema-field">id <span class="field-type">uuid pk</span></div>
+        <div class="schema-field">role <span class="field-type">enum</span></div>
+        <div class="schema-field">full_name <span class="field-type">text</span></div>
+        <div class="schema-field">email <span class="field-type">text</span></div>
+        <div class="schema-field">phone <span class="field-type">text?</span></div>
+        <div class="schema-field">avatar_url <span class="field-type">text?</span></div>
+      </div>
+
+      <div class="schema-card">
+        <div class="schema-card-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
+          clients
+        </div>
+        <div class="schema-field">id <span class="field-type">uuid pk</span></div>
+        <div class="schema-field">company_name <span class="field-type">text</span></div>
+        <div class="schema-field">cnpj <span class="field-type">char(14)?</span></div>
+        <div class="schema-field">cpf <span class="field-type">char(11)?</span></div>
+        <div class="schema-field">status <span class="field-type">enum</span></div>
+        <div class="schema-field">responsible_staff_id <span class="field-type">fk</span></div>
+      </div>
+
+      <div class="schema-card">
+        <div class="schema-card-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          messages
+        </div>
+        <div class="schema-field">id <span class="field-type">uuid pk</span></div>
+        <div class="schema-field">sender_id <span class="field-type">fk</span></div>
+        <div class="schema-field">recipient_id <span class="field-type">fk</span></div>
+        <div class="schema-field">subject <span class="field-type">text</span></div>
+        <div class="schema-field">body <span class="field-type">text</span></div>
+        <div class="schema-field">attachments <span class="field-type">text[]?</span></div>
+      </div>
+
+      <div class="schema-card">
+        <div class="schema-card-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          obrigacoes
+        </div>
+        <div class="schema-field">id <span class="field-type">uuid pk</span></div>
+        <div class="schema-field">client_id <span class="field-type">fk</span></div>
+        <div class="schema-field">due_date <span class="field-type">date</span></div>
+        <div class="schema-field">status <span class="field-type">enum</span></div>
+        <div class="schema-field">priority <span class="field-type">enum</span></div>
+        <div class="schema-field">category <span class="field-type">text?</span></div>
+      </div>
+
+      <div class="schema-card">
+        <div class="schema-card-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          honorarios
+        </div>
+        <div class="schema-field">id <span class="field-type">uuid pk</span></div>
+        <div class="schema-field">client_id <span class="field-type">fk</span></div>
+        <div class="schema-field">amount <span class="field-type">numeric</span></div>
+        <div class="schema-field">due_date <span class="field-type">date</span></div>
+        <div class="schema-field">status <span class="field-type">enum</span></div>
+        <div class="schema-field">invoice_number <span class="field-type">text?</span></div>
+      </div>
+
+    </div><!-- /schema-grid -->
+  </div>
+
+  <!-- ── Stack ───────────────────────────────────────── -->
+  <div class="stack-section" id="stack">
+    <div class="section-title">Stack técnica</div>
+    <div class="section-sub">Tecnologias utilizadas no projeto</div>
+
+    <div class="stack-grid">
+      <div class="stack-card">
+        <div class="stack-icon" style="background:#000;color:#fff;font-size:14px;font-weight:800;">N</div>
+        <div class="stack-name">Next.js 15</div>
+        <div class="stack-sub">App Router + RSC</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon" style="background:#3178c6;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M0 12C0 5.373 5.373 0 12 0s12 5.373 12 12-5.373 12-12 12S0 18.627 0 12zm19.27 1.463c.133.31.135.643.007.955l-.003.007a1.3 1.3 0 0 1-.734.668l-5.163 1.897a1.3 1.3 0 0 1-1.64-.776L9.853 12.33l-2.55 3.399a.5.5 0 0 1-.703.1l-.703-.527a.5.5 0 0 1-.1-.703l2.88-3.839L6.33 6.87a1.3 1.3 0 0 1 .776-1.64l5.163-1.897a1.3 1.3 0 0 1 1.64.776l1.896 5.162a1.3 1.3 0 0 1-.007.956l-1.137 2.623 3.49-1.282a1.3 1.3 0 0 1 1.119.895z"/></svg>
+        </div>
+        <div class="stack-name">TypeScript</div>
+        <div class="stack-sub">Tipos estáticos</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon" style="background:#0ea5e9;font-size:11px;font-weight:800;color:white;">TW</div>
+        <div class="stack-name">Tailwind CSS</div>
+        <div class="stack-sub">Utility-first CSS</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon" style="background:#3ecf8e;font-size:11px;font-weight:800;color:white;">SB</div>
+        <div class="stack-name">Supabase</div>
+        <div class="stack-sub">Auth + Database</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon" style="background:#336791;font-size:11px;font-weight:800;color:white;">PG</div>
+        <div class="stack-name">PostgreSQL</div>
+        <div class="stack-sub">RLS + Triggers</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon" style="background:#f97316;font-size:18px;">⚡</div>
+        <div class="stack-name">Lucide React</div>
+        <div class="stack-sub">Ícones SVG</div>
+      </div>
+      <div class="stack-card">
+        <div class="stack-icon" style="background:#8b5cf6;font-size:18px;">📅</div>
+        <div class="stack-name">date-fns</div>
+        <div class="stack-sub">Formatação de datas</div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /container -->
+
+<!-- ── Footer ──────────────────────────────────────── -->
+<footer>
+  <strong>ContaCliente</strong> · Sistema de gestão contábil ·
+  Next.js 15 · TypeScript · Tailwind CSS · Supabase
+</footer>
+
+<!-- ── Lightbox ────────────────────────────────────── -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="" />
+    <p class="lightbox-caption" id="lightbox-caption"></p>
+  </div>
+</div>
+
+<script>
+  function openLightbox(src, caption) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-caption').textContent = caption;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(e) {
+    if (e && e.target !== document.getElementById('lightbox') && !e.target.closest('.lightbox-close')) return;
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox({target: document.getElementById('lightbox')});
+  });
+
+  // Smooth scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+      a.classList.add('active');
+    });
+  });
+
+  // Highlight nav on scroll
+  const sections = [
+    { id: 'pages',  link: 0 },
+    { id: 'schema', link: 1 },
+    { id: 'stack',  link: 2 },
+  ];
+  const pills = document.querySelectorAll('.nav-pill');
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 120;
+    let active = 0;
+    sections.forEach((s, i) => {
+      const el = document.getElementById(s.id);
+      if (el && el.offsetTop <= y) active = i;
+    });
+    pills.forEach((p, i) => p.classList.toggle('active', i === active));
+  });
+</script>
+
+</body>
+</html>
