@@ -1,106 +1,117 @@
+// ─── Enums reais do banco ─────────────────────────────────────────────────────
+
+export type StatusCliente   = "ativo" | "inativo";
+export type Periodicidade   = "diaria" | "semanal" | "mensal" | "trimestral" | "semestral" | "anual" | "eventual";
+export type TipoPrazo       = "vencimento" | "entrega" | "ambos";
+export type StatusEntrega   = "pendente" | "entregue" | "vencendo_hoje" | "vencida" | "dispensada" | "nao_aplicavel" | "sem_movimento";
+export type StatusFinanceiro= "pendente" | "pago" | "cancelado";
+
+// Mantido para compatibilidade com Sidebar/layout
 export type UserRole = "admin" | "staff" | "client";
 
-export type ClientStatus = "active" | "inactive" | "pending";
+// ─── Tabelas ─────────────────────────────────────────────────────────────────
 
-export type MessageStatus = "sent" | "read" | "archived";
-
-export type ObrigacaoStatus = "pending" | "in_progress" | "completed" | "overdue";
-
-export type ObrigacaoPriority = "low" | "medium" | "high" | "critical";
-
-export type HonorarioStatus = "pending" | "paid" | "overdue" | "cancelled";
-
-export interface Profile {
+export interface Cliente {
   id: string;
-  role: UserRole;
-  full_name: string;
-  email: string;
-  phone: string | null;
-  avatar_url: string | null;
+  codigo: number | null;
+  rt: string | null;
+  razao_social: string;
+  cnpj: string;
+  inscricao_estadual: string | null;
+  regime_tributario: string | null;
+  municipio: string | null;
+  uf: string | null;
+  status: StatusCliente;
+  observacoes: string | null;
+  honorarios: number | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface Client {
-  id: string;
-  profile_id: string | null;
-  company_name: string;
-  cnpj: string | null;
-  cpf: string | null;
-  email: string;
-  phone: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  zip_code: string | null;
-  status: ClientStatus;
-  responsible_staff_id: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  profile?: Profile;
-  responsible_staff?: Profile;
-}
-
-export interface Message {
-  id: string;
-  sender_id: string;
-  recipient_id: string;
-  client_id: string | null;
-  subject: string;
-  body: string;
-  status: MessageStatus;
-  parent_id: string | null;
-  attachments: string[] | null;
-  created_at: string;
-  updated_at: string;
-  sender?: Profile;
-  recipient?: Profile;
-  client?: Client;
-  replies?: Message[];
 }
 
 export interface Obrigacao {
   id: string;
-  client_id: string;
-  assigned_to: string | null;
-  title: string;
-  description: string | null;
-  due_date: string;
-  competence_date: string | null;
-  status: ObrigacaoStatus;
-  priority: ObrigacaoPriority;
-  category: string | null;
-  completed_at: string | null;
+  codigo: string;
+  nome: string;
+  descricao: string | null;
+  periodicidade: Periodicidade;
+  tipo_prazo: TipoPrazo;
+  ativa: boolean;
+  dia_vencimento: number | null;
+  regra_vencimento: string;
   created_at: string;
   updated_at: string;
-  client?: Client;
-  assignee?: Profile;
 }
 
-export interface Honorario {
+export interface ClienteObrigacao {
   id: string;
-  client_id: string;
-  description: string;
-  amount: number;
-  due_date: string;
-  payment_date: string | null;
-  status: HonorarioStatus;
-  reference_month: string | null;
-  invoice_number: string | null;
-  notes: string | null;
+  cliente_id: string;
+  obrigacao_id: string;
+  dia_vencimento: number | null;
+  dia_limite_entrega: number | null;
+  data_vencimento_fixa: string | null;
+  data_limite_entrega_fixa: string | null;
+  exige_valor: boolean;
+  ativa: boolean;
+  observacoes: string | null;
   created_at: string;
   updated_at: string;
-  client?: Client;
+  cliente?: Cliente;
+  obrigacao?: Obrigacao;
 }
+
+export interface Competencia {
+  id: string;
+  referencia: string; // YYYY-MM
+  ano: number;
+  mes: number;
+  inicio_periodo: string;
+  fim_periodo: string;
+  created_at: string;
+}
+
+export interface EntregaObrigacao {
+  id: string;
+  cliente_obrigacao_id: string;
+  competencia_id: string;
+  data_vencimento: string | null;
+  data_limite_entrega: string | null;
+  status: StatusEntrega;
+  data_entrega: string | null;
+  valor: number | null;
+  observacao: string | null;
+  concluido_por: string | null;
+  created_at: string;
+  updated_at: string;
+  // joined
+  competencia?: Competencia;
+  cliente_obrigacao?: ClienteObrigacao & {
+    cliente?: Cliente;
+    obrigacao?: Obrigacao;
+  };
+}
+
+export interface FinanceiroHonorario {
+  id: string;
+  cliente_id: string;
+  competencia_id: string;
+  valor: number;
+  status: StatusFinanceiro;
+  data_pagamento: string | null;
+  observacao: string | null;
+  created_at: string;
+  updated_at: string;
+  // joined
+  cliente?: Cliente;
+  competencia?: Competencia;
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export interface DashboardStats {
-  totalClients: number;
-  activeClients: number;
-  pendingObrigacoes: number;
-  overdueObrigacoes: number;
-  unreadMessages: number;
-  pendingHonorarios: number;
-  overdueHonorarios: number;
-  monthlyRevenue: number;
+  clientesAtivos: number;
+  entregasPendentes: number;
+  entregasVencidas: number;
+  honorariosPendentes: number;
+  totalRecebido: number;
+  competenciaAtual: string;
 }

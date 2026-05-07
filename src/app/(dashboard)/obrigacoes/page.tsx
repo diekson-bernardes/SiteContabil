@@ -1,173 +1,319 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Search, Calendar } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Search, Calendar, Loader2, RefreshCw } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { Modal } from "@/components/ui/Modal";
 import { Table, TableHead, Th, TableBody, Tr, Td } from "@/components/ui/Table";
+import { Modal } from "@/components/ui/Modal";
 import { formatDate } from "@/lib/utils";
-import type { Obrigacao } from "@/types";
+import type { StatusEntrega } from "@/types";
 
-const statusMap = {
-  pending:     { label: "Pendente",      variant: "yellow"  as const },
-  in_progress: { label: "Em andamento",  variant: "blue"    as const },
-  completed:   { label: "Concluída",     variant: "green"   as const },
-  overdue:     { label: "Vencida",       variant: "red"     as const },
+const statusMap: Record<StatusEntrega, { label: string; variant: "gray"|"blue"|"green"|"yellow"|"red"|"purple" }> = {
+  pendente:      { label: "Pendente",      variant: "yellow" },
+  vencendo_hoje: { label: "Vence hoje",    variant: "red"    },
+  vencida:       { label: "Vencida",       variant: "red"    },
+  entregue:      { label: "Entregue",      variant: "green"  },
+  dispensada:    { label: "Dispensada",    variant: "gray"   },
+  nao_aplicavel: { label: "N/A",           variant: "gray"   },
+  sem_movimento: { label: "Sem movimento", variant: "gray"   },
 };
 
-const priorityMap = {
-  low:      { label: "Baixa",    variant: "gray"   as const },
-  medium:   { label: "Média",    variant: "blue"   as const },
-  high:     { label: "Alta",     variant: "yellow" as const },
-  critical: { label: "Crítica",  variant: "red"    as const },
-};
+type FilterStatus = "todos" | StatusEntrega;
 
-const MOCK_OBRIGACOES: Obrigacao[] = [
-  { id: "1", client_id: "1", assigned_to: null, title: "GFIP",        description: "Geração e envio da GFIP mensal",      due_date: "2026-05-10", competence_date: "2026-04-30", status: "pending",     priority: "high",     category: "Trabalhista", completed_at: null, created_at: "2026-05-01T00:00:00Z", updated_at: "2026-05-01T00:00:00Z", client: { id: "1", profile_id: null, company_name: "Empresa ABC", cnpj: null, cpf: null, email: "", phone: null, address: null, city: null, state: null, zip_code: null, status: "active", responsible_staff_id: null, notes: null, created_at: "", updated_at: "" } },
-  { id: "2", client_id: "2", assigned_to: null, title: "SPED Fiscal", description: "Entrega do SPED Fiscal trimestral",    due_date: "2026-05-15", competence_date: "2026-03-31", status: "in_progress", priority: "critical", category: "Fiscal",      completed_at: null, created_at: "2026-05-01T00:00:00Z", updated_at: "2026-05-01T00:00:00Z", client: { id: "2", profile_id: null, company_name: "Tech Soluções", cnpj: null, cpf: null, email: "", phone: null, address: null, city: null, state: null, zip_code: null, status: "active", responsible_staff_id: null, notes: null, created_at: "", updated_at: "" } },
-  { id: "3", client_id: "3", assigned_to: null, title: "IRPJ",        description: "Declaração de IRPJ anual",            due_date: "2026-05-30", competence_date: "2025-12-31", status: "pending",     priority: "high",     category: "Fiscal",      completed_at: null, created_at: "2026-05-01T00:00:00Z", updated_at: "2026-05-01T00:00:00Z", client: { id: "3", profile_id: null, company_name: "Comércio Geral", cnpj: null, cpf: null, email: "", phone: null, address: null, city: null, state: null, zip_code: null, status: "pending", responsible_staff_id: null, notes: null, created_at: "", updated_at: "" } },
-  { id: "4", client_id: "5", assigned_to: null, title: "DCTF",        description: "Declaração de Débitos e Créditos",    due_date: "2026-04-30", competence_date: "2026-03-31", status: "overdue",     priority: "critical", category: "Federal",     completed_at: null, created_at: "2026-04-01T00:00:00Z", updated_at: "2026-04-01T00:00:00Z", client: { id: "5", profile_id: null, company_name: "Empresa XYZ", cnpj: null, cpf: null, email: "", phone: null, address: null, city: null, state: null, zip_code: null, status: "active", responsible_staff_id: null, notes: null, created_at: "", updated_at: "" } },
-  { id: "5", client_id: "1", assigned_to: null, title: "ECF",         description: "Escrituração Contábil Fiscal",        due_date: "2026-07-31", competence_date: "2025-12-31", status: "pending",     priority: "medium",   category: "Fiscal",      completed_at: null, created_at: "2026-05-01T00:00:00Z", updated_at: "2026-05-01T00:00:00Z", client: { id: "1", profile_id: null, company_name: "Empresa ABC", cnpj: null, cpf: null, email: "", phone: null, address: null, city: null, state: null, zip_code: null, status: "active", responsible_staff_id: null, notes: null, created_at: "", updated_at: "" } },
-];
+interface Entrega {
+  id: string;
+  status: StatusEntrega;
+  data_vencimento: string | null;
+  data_limite_entrega: string | null;
+  data_entrega: string | null;
+  valor: number | null;
+  observacao: string | null;
+  updated_at: string;
+  competencia: { referencia: string } | null;
+  cliente_obrigacao: {
+    cliente: { razao_social: string } | null;
+    obrigacao: { codigo: string; nome: string; periodicidade: string } | null;
+  } | null;
+}
 
-type FilterStatus = "all" | "pending" | "in_progress" | "completed" | "overdue";
+interface Competencia { id: string; referencia: string }
 
 export default function ObrigacoesPage() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<FilterStatus>("all");
-  const [modalOpen, setModalOpen] = useState(false);
+  const supabase = createClient();
 
-  const filtered = MOCK_OBRIGACOES.filter((o) => {
-    const matchSearch =
-      o.title.toLowerCase().includes(search.toLowerCase()) ||
-      (o.client?.company_name ?? "").toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filter === "all" || o.status === filter;
-    return matchSearch && matchStatus;
+  const [entregas, setEntregas]       = useState<Entrega[]>([]);
+  const [competencias, setCompetencias] = useState<Competencia[]>([]);
+  const [competenciaId, setCompetenciaId] = useState<string>("");
+  const [loading, setLoading]         = useState(true);
+  const [search, setSearch]           = useState("");
+  const [filter, setFilter]           = useState<FilterStatus>("todos");
+  const [selected, setSelected]       = useState<Entrega | null>(null);
+  const [saving, setSaving]           = useState(false);
+  const [novoStatus, setNovoStatus]   = useState<StatusEntrega>("entregue");
+  const [obsModal, setObsModal]       = useState("");
+
+  // Carregar competências
+  useEffect(() => {
+    supabase
+      .from("competencias")
+      .select("id, referencia")
+      .order("ano", { ascending: false })
+      .order("mes", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setCompetencias(data);
+          setCompetenciaId(data[0].id);
+        }
+      });
+  }, []);
+
+  const fetchEntregas = useCallback(async () => {
+    if (!competenciaId) return;
+    setLoading(true);
+
+    // Usa a view vw_entregas_detalhe que já traz os JOINs prontos
+    const { data } = await supabase
+      .from("vw_entregas_detalhe")
+      .select("id, status, data_vencimento, data_limite_entrega, data_entrega, valor, observacao, razao_social, obrigacao_codigo, obrigacao_nome, competencia_ref")
+      .eq("competencia_id", competenciaId)
+      .order("data_vencimento", { ascending: true });
+
+    // Mapeia para o formato esperado pelo componente
+    const mapped: Entrega[] = (data ?? []).map((r: any) => ({
+      id: r.id,
+      status: r.status,
+      data_vencimento: r.data_vencimento,
+      data_limite_entrega: r.data_limite_entrega,
+      data_entrega: r.data_entrega,
+      valor: r.valor,
+      observacao: r.observacao,
+      updated_at: "",
+      competencia: { referencia: r.competencia_ref },
+      cliente_obrigacao: {
+        cliente: { razao_social: r.razao_social },
+        obrigacao: { codigo: r.obrigacao_codigo, nome: r.obrigacao_nome, periodicidade: "" },
+      },
+    }));
+
+    setEntregas(mapped);
+    setLoading(false);
+  }, [competenciaId]);
+
+  useEffect(() => { fetchEntregas(); }, [fetchEntregas]);
+
+  const filtered = entregas.filter((e) => {
+    const cliente = e.cliente_obrigacao?.cliente?.razao_social ?? "";
+    const obrig   = e.cliente_obrigacao?.obrigacao?.nome ?? "";
+    const codigo  = e.cliente_obrigacao?.obrigacao?.codigo ?? "";
+    const matchSearch = (
+      cliente.toLowerCase().includes(search.toLowerCase()) ||
+      obrig.toLowerCase().includes(search.toLowerCase()) ||
+      codigo.toLowerCase().includes(search.toLowerCase())
+    );
+    const matchFilter = filter === "todos" || e.status === filter;
+    return matchSearch && matchFilter;
   });
 
-  const counts = {
-    all:         MOCK_OBRIGACOES.length,
-    pending:     MOCK_OBRIGACOES.filter(o => o.status === "pending").length,
-    in_progress: MOCK_OBRIGACOES.filter(o => o.status === "in_progress").length,
-    completed:   MOCK_OBRIGACOES.filter(o => o.status === "completed").length,
-    overdue:     MOCK_OBRIGACOES.filter(o => o.status === "overdue").length,
-  };
+  const counts: Record<string, number> = { todos: entregas.length };
+  for (const e of entregas) {
+    counts[e.status] = (counts[e.status] ?? 0) + 1;
+  }
+
+  async function handleUpdateStatus() {
+    if (!selected) return;
+    setSaving(true);
+    await supabase
+      .from("entregas_obrigacoes")
+      .update({
+        status: novoStatus,
+        observacao: obsModal || null,
+        data_entrega: novoStatus === "entregue" ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", selected.id);
+    setSaving(false);
+    setSelected(null);
+    fetchEntregas();
+  }
+
+  const filterOptions: { key: FilterStatus; label: string }[] = [
+    { key: "todos",        label: "Todas"         },
+    { key: "pendente",     label: "Pendentes"     },
+    { key: "vencendo_hoje",label: "Vence hoje"    },
+    { key: "vencida",      label: "Vencidas"      },
+    { key: "entregue",     label: "Entregues"     },
+    { key: "sem_movimento",label: "Sem movimento" },
+  ];
 
   return (
     <div className="space-y-5">
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          placeholder="Buscar obrigação ou cliente..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          leftIcon={<Search className="h-4 w-4" />}
-          className="w-72"
-        />
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Nova Obrigação
+        <div className="flex gap-2 items-center flex-wrap">
+          <Input
+            placeholder="Buscar cliente ou obrigação..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftIcon={<Search className="h-4 w-4" />}
+            className="w-64"
+          />
+          {/* Seletor de competência */}
+          <select
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            value={competenciaId}
+            onChange={(e) => setCompetenciaId(e.target.value)}
+          >
+            {competencias.map((c) => (
+              <option key={c.id} value={c.id}>{c.referencia}</option>
+            ))}
+          </select>
+        </div>
+        <Button variant="outline" onClick={fetchEntregas} size="md">
+          <RefreshCw className="h-4 w-4" />
+          Atualizar
         </Button>
       </div>
 
-      {/* Status filter tabs */}
+      {/* Filter pills */}
       <div className="flex gap-2 flex-wrap">
-        {(["all", "pending", "in_progress", "overdue", "completed"] as FilterStatus[]).map((s) => {
-          const labels: Record<FilterStatus, string> = {
-            all: "Todas", pending: "Pendentes", in_progress: "Em andamento", overdue: "Vencidas", completed: "Concluídas"
-          };
-          return (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-                filter === s
-                  ? "bg-brand-600 text-white"
-                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {labels[s]} ({counts[s]})
-            </button>
-          );
-        })}
+        {filterOptions.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key)}
+            className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+              filter === key
+                ? "bg-brand-600 text-white"
+                : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            {label} ({counts[key] ?? 0})
+          </button>
+        ))}
       </div>
 
       {/* Table */}
-      <Table>
-        <TableHead>
-          <Th>Obrigação</Th>
-          <Th>Cliente</Th>
-          <Th>Categoria</Th>
-          <Th>Vencimento</Th>
-          <Th>Prioridade</Th>
-          <Th>Status</Th>
-          <Th />
-        </TableHead>
-        <TableBody>
-          {filtered.map((ob) => {
-            const s = statusMap[ob.status];
-            const p = priorityMap[ob.priority];
-            return (
-              <Tr key={ob.id}>
-                <Td>
-                  <p className="font-medium text-gray-900">{ob.title}</p>
-                  <p className="text-xs text-gray-500">{ob.description}</p>
-                </Td>
-                <Td>{ob.client?.company_name ?? "-"}</Td>
-                <Td>
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                    {ob.category}
-                  </span>
-                </Td>
-                <Td>
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                    {formatDate(ob.due_date)}
-                  </div>
-                </Td>
-                <Td><Badge variant={p.variant}>{p.label}</Badge></Td>
-                <Td><Badge variant={s.variant}>{s.label}</Badge></Td>
-                <Td>
-                  <Button variant="ghost" size="sm">Editar</Button>
-                </Td>
-              </Tr>
-            );
-          })}
-        </TableBody>
-      </Table>
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-gray-400 gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Carregando entregas...
+        </div>
+      ) : (
+        <Table>
+          <TableHead>
+            <Th>Obrigação</Th>
+            <Th>Cliente</Th>
+            <Th>Periodicidade</Th>
+            <Th>Vencimento</Th>
+            <Th>Entrega até</Th>
+            <Th>Status</Th>
+            <Th />
+          </TableHead>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center text-sm text-gray-400">
+                  Nenhuma entrega encontrada.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((e) => {
+                const s = statusMap[e.status];
+                const ob = e.cliente_obrigacao?.obrigacao;
+                const cl = e.cliente_obrigacao?.cliente;
+                return (
+                  <Tr key={e.id}>
+                    <Td>
+                      <p className="font-medium text-gray-900">{ob?.nome ?? "—"}</p>
+                      <p className="text-xs font-mono text-gray-400">{ob?.codigo ?? ""}</p>
+                    </Td>
+                    <Td>
+                      <p className="text-sm text-gray-700 max-w-[200px] truncate">{cl?.razao_social ?? "—"}</p>
+                    </Td>
+                    <Td>
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 capitalize">
+                        {ob?.periodicidade ?? "—"}
+                      </span>
+                    </Td>
+                    <Td>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                        {e.data_vencimento ? formatDate(e.data_vencimento) : "—"}
+                      </div>
+                    </Td>
+                    <Td>
+                      {e.data_limite_entrega ? formatDate(e.data_limite_entrega) : "—"}
+                    </Td>
+                    <Td><Badge variant={s.variant}>{s.label}</Badge></Td>
+                    <Td>
+                      {e.status !== "entregue" && e.status !== "dispensada" && e.status !== "nao_aplicavel" && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setSelected(e);
+                            setNovoStatus("entregue");
+                            setObsModal(e.observacao ?? "");
+                          }}
+                        >
+                          Atualizar
+                        </Button>
+                      )}
+                    </Td>
+                  </Tr>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      )}
 
-      {/* New obrigacao modal */}
+      {/* Modal atualizar status */}
       <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Nova Obrigação"
-        size="lg"
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title="Atualizar Status da Entrega"
         footer={
           <>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button>Salvar</Button>
+            <Button variant="outline" onClick={() => setSelected(null)}>Cancelar</Button>
+            <Button onClick={handleUpdateStatus} loading={saving}>Confirmar</Button>
           </>
         }
       >
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <Input label="Título" placeholder="Ex: GFIP, SPED, DCTF..." />
+        {selected && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm">
+              <p className="font-medium text-gray-900">
+                {selected.cliente_obrigacao?.obrigacao?.nome}
+              </p>
+              <p className="text-gray-500">{selected.cliente_obrigacao?.cliente?.razao_social}</p>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Novo Status</label>
+              <select
+                className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                value={novoStatus}
+                onChange={(e) => setNovoStatus(e.target.value as StatusEntrega)}
+              >
+                {(["entregue","dispensada","sem_movimento","nao_aplicavel","vencida"] as StatusEntrega[]).map((s) => (
+                  <option key={s} value={s}>{statusMap[s].label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Observação</label>
+              <textarea
+                className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                rows={3}
+                value={obsModal}
+                onChange={(e) => setObsModal(e.target.value)}
+                placeholder="Observações sobre a entrega..."
+              />
+            </div>
           </div>
-          <Input label="Cliente" placeholder="Selecione o cliente..." />
-          <Input label="Categoria" placeholder="Fiscal, Trabalhista..." />
-          <Input label="Data de Vencimento" type="date" />
-          <Input label="Competência" type="date" />
-          <div className="col-span-2">
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Descrição</label>
-            <textarea
-              className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              rows={3}
-              placeholder="Descrição da obrigação..."
-            />
-          </div>
-        </div>
+        )}
       </Modal>
     </div>
   );
